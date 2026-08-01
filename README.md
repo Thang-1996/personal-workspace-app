@@ -66,3 +66,6 @@ Vite chạy tại <http://localhost:5173> và proxy `/api` sang Task Service ở
 `8081`. Chạy `npm run check` để lint, test và production build. Xem kiến trúc,
 UI reference, screen list và giải đáp kỹ thuật tại
 [`docs/PER-8-implementation.md`](docs/PER-8-implementation.md).
+
+Dashboard, Task List, Task Detail, CRUD, filter/pagination và optimistic update
+được mô tả tại [`docs/PER-9-implementation.md`](docs/PER-9-implementation.md).
