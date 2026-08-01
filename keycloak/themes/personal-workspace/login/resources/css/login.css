@@ -23,7 +23,7 @@ body {
 .pf-v5-c-login__container {
   display: block;
   margin: auto;
-  max-width: 32rem;
+  max-width: 30rem;
   width: 100%;
 }
 
@@ -54,7 +54,7 @@ body {
   align-items: center;
   display: flex;
   flex-direction: column;
-  padding-block-start: 2.5rem;
+  padding: 2rem 2.5rem 1rem;
   text-align: center;
 }
 
@@ -69,22 +69,32 @@ body {
   font-weight: 800;
   height: 3rem;
   justify-content: center;
-  margin-block-end: 1rem;
+  margin: 0 0 1rem;
   width: 3rem;
 }
 
 #kc-page-title {
-  font-size: 1.5rem;
+  font-size: clamp(1.35rem, 3vw, 1.65rem);
   font-weight: 750;
   letter-spacing: -0.025em;
   line-height: 1.25;
   margin: 0;
   max-width: none;
+  white-space: nowrap;
   width: 100%;
 }
 
 .pf-v5-c-login__main-body {
-  padding-inline: clamp(1.5rem, 6vw, 3rem);
+  padding: 0 2.5rem 2rem;
+}
+
+#kc-form-login {
+  display: grid;
+  gap: 1rem;
+}
+
+#kc-form-login .pf-v5-c-form__group {
+  margin: 0;
 }
 
 #kc-form-options,
@@ -93,19 +103,34 @@ body {
   width: 100%;
 }
 
-#kc-form-options .pf-v5-c-form__group {
+#kc-form-options {
   align-items: flex-start;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
 }
 
-#kc-form-options .pf-v5-c-form__group > * {
+#kc-form-options > * {
   min-width: 0;
 }
 
+#kc-form-options label,
+#kc-form-options .pf-v5-c-check__label {
+  white-space: nowrap;
+}
+
 #kc-form-options a {
+  white-space: nowrap;
   text-align: right;
+}
+
+#kc-info {
+  margin: 0;
+}
+
+#kc-info-wrapper {
+  padding: 1rem 2.5rem;
+  text-align: center;
 }
 
 .pf-v5-c-form-control,
@@ -159,11 +184,31 @@ a {
   }
 
   .pf-v5-c-login__main-body {
-    padding-inline: 1.25rem;
+    padding: 0 1.25rem 1.5rem;
   }
 
-  #kc-form-options .pf-v5-c-form__group {
-    display: grid;
+  .pf-v5-c-login__main-header {
+    padding: 1.5rem 1.25rem 1rem;
+  }
+
+  #kc-page-title {
+    font-size: 1.3rem;
+  }
+
+  #kc-info-wrapper {
+    padding: 1rem 1.25rem;
+  }
+}
+
+@media (max-width: 24rem) {
+  #kc-page-title {
+    white-space: normal;
+  }
+
+  #kc-form-options {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   #kc-form-options a {

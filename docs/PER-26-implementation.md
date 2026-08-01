@@ -47,6 +47,9 @@ vào container. Theme kế thừa `keycloak.v2`, chỉ override CSS:
 - Header trong card dùng layout một cột để badge và tiêu đề không bị ép thành
   hai cột; vùng form có chiều rộng/padding ổn định và hàng Remember/Forgot được
   căn hai phía trên desktop, xếp dọc trên màn hình nhỏ.
+- Khoảng cách dọc của PatternFly được override ở form group/header/info area để
+  card luôn nằm gọn trong viewport; title và các action quan trọng không wrap ở
+  desktop, nhưng vẫn cho phép xếp dọc trên màn hình rất hẹp.
 - Input focus state, primary button và info/register area.
 - Responsive mobile và `prefers-reduced-motion`.
 
