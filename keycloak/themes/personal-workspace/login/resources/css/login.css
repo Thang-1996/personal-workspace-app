@@ -23,7 +23,7 @@ body {
 .pf-v5-c-login__container {
   display: block;
   margin: auto;
-  max-width: 30rem;
+  max-width: 32rem;
   width: 100%;
 }
 
@@ -51,6 +51,9 @@ body {
 }
 
 .pf-v5-c-login__main-header {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
   padding-block-start: 2.5rem;
   text-align: center;
 }
@@ -74,6 +77,35 @@ body {
   font-size: 1.5rem;
   font-weight: 750;
   letter-spacing: -0.025em;
+  line-height: 1.25;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+}
+
+.pf-v5-c-login__main-body {
+  padding-inline: clamp(1.5rem, 6vw, 3rem);
+}
+
+#kc-form-options,
+#kc-form-buttons,
+#kc-registration-container {
+  width: 100%;
+}
+
+#kc-form-options .pf-v5-c-form__group {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+#kc-form-options .pf-v5-c-form__group > * {
+  min-width: 0;
+}
+
+#kc-form-options a {
+  text-align: right;
 }
 
 .pf-v5-c-form-control,
@@ -124,6 +156,18 @@ a {
 
   .pf-v5-c-login__main {
     border-radius: 1rem;
+  }
+
+  .pf-v5-c-login__main-body {
+    padding-inline: 1.25rem;
+  }
+
+  #kc-form-options .pf-v5-c-form__group {
+    display: grid;
+  }
+
+  #kc-form-options a {
+    text-align: left;
   }
 }
 

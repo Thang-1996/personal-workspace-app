@@ -44,6 +44,9 @@ vào container. Theme kế thừa `keycloak.v2`, chỉ override CSS:
 
 - Background illustration riêng, brand gradient/logo badge, màu indigo,
   typography và card căn giữa viewport.
+- Header trong card dùng layout một cột để badge và tiêu đề không bị ép thành
+  hai cột; vùng form có chiều rộng/padding ổn định và hàng Remember/Forgot được
+  căn hai phía trên desktop, xếp dọc trên màn hình nhỏ.
 - Input focus state, primary button và info/register area.
 - Responsive mobile và `prefers-reduced-motion`.
 
