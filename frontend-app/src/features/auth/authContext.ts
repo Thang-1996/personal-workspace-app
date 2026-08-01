@@ -9,6 +9,7 @@ export type WorkspaceUser = {
 export type AuthContextValue = {
   authenticated: boolean
   initialized: boolean
+  initializationError: string | null
   user: WorkspaceUser | null
   hasRole: (role: string) => boolean
   login: () => Promise<void>

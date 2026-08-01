@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } fro
 import { setAccessToken } from '../../shared/api/httpClient'
 import { env } from '../../shared/config/env'
 import { AuthContext, type WorkspaceUser } from './authContext'
+import { currentApplicationUrl } from './redirectUri'
 
 type WorkspaceToken = KeycloakTokenParsed & {
   preferred_username?: string
@@ -12,10 +13,22 @@ type WorkspaceToken = KeycloakTokenParsed & {
 }
 
 const keycloak = new Keycloak(env.keycloak)
+let initialization: Promise<boolean> | undefined
+
+function initializeKeycloak() {
+  initialization ??= keycloak.init({
+    onLoad: 'login-required',
+    pkceMethod: 'S256',
+    checkLoginIframe: false,
+    redirectUri: currentApplicationUrl(),
+  })
+  return initialization
+}
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const queryClient = useQueryClient()
   const [initialized, setInitialized] = useState(false)
+  const [initializationError, setInitializationError] = useState<string | null>(null)
   const [authenticated, setAuthenticated] = useState(false)
   const [user, setUser] = useState<WorkspaceUser | null>(null)
 
@@ -36,20 +49,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     let active = true
-    keycloak
-      .init({
-        onLoad: 'login-required',
-        pkceMethod: 'S256',
-        checkLoginIframe: false,
-        redirectUri: window.location.href,
-      })
+    initializeKeycloak()
       .then(() => {
         if (!active) return
         synchronizeSession()
         setInitialized(true)
       })
-      .catch(() => {
-        if (active) setInitialized(true)
+      .catch((error: unknown) => {
+        if (!active) return
+        setInitializationError(error instanceof Error ? error.message : 'Authentication initialization failed')
+        setInitialized(true)
       })
 
     keycloak.onTokenExpired = () => {
@@ -74,7 +83,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [queryClient, synchronizeSession])
 
   const login = useCallback(async () => {
-    await keycloak.login({ redirectUri: window.location.href })
+    await keycloak.login({ redirectUri: currentApplicationUrl() })
   }, [])
 
   const logout = useCallback(async () => {
@@ -87,12 +96,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
     () => ({
       authenticated,
       initialized,
+      initializationError,
       user,
       hasRole: (role: string) => user?.roles.includes(role) ?? false,
       login,
       logout,
     }),
-    [authenticated, initialized, login, logout, user],
+    [authenticated, initializationError, initialized, login, logout, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

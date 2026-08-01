@@ -9,13 +9,20 @@ có SSO session, Keycloak JS chuyển thẳng tới Identity Provider bằng
 Authorization Code + PKCE S256. Màn hình “Continue to sign in” trung gian đã bị
 loại bỏ.
 
+Callback URL được dựng từ `origin + pathname + search`, chủ động bỏ OAuth hash
+fragment. `ProtectedRoute` không tự gọi `login()` lần hai; Keycloak adapter là
+đầu mối duy nhất bắt đầu navigation. Điều này loại race giữa `initialized` và
+React state `authenticated` từng gây redirect loop sau callback.
+
+Keycloak initialization được memoize ở module scope để React `StrictMode` có thể
+mount effect hai lần trong development mà không gọi `keycloak.init()` hai lần.
+Nếu token exchange hoặc khởi tạo authentication thất bại, ứng dụng hiển thị lỗi
+và nút đăng nhập lại thay vì giữ loading skeleton vô hạn như một trang trắng.
+
 `ProtectedRoute` chỉ còn hai trạng thái:
 
 - Loading skeleton trong lúc adapter khởi tạo/chuyển trang.
 - Render ứng dụng sau khi authenticated.
-
-Fallback effect gọi `login()` nếu adapter init xong nhưng chưa authenticated,
-giúp tránh màn hình trắng khi browser/session có trạng thái biên.
 
 ### Keycloak realm
 
@@ -35,7 +42,17 @@ giúp tránh màn hình trắng khi browser/session có trạng thái biên.
 Theme nằm tại `keycloak/themes/personal-workspace/login` và được mount read-only
 vào container. Theme kế thừa `keycloak.v2`, chỉ override CSS:
 
-- Brand gradient/logo badge, màu indigo, typography và card.
+- Background illustration riêng, brand gradient/logo badge, màu indigo,
+  typography và card căn giữa viewport.
+- Header trong card dùng layout một cột để badge và tiêu đề không bị ép thành
+  hai cột; vùng form có chiều rộng/padding ổn định và hàng Remember/Forgot được
+  căn hai phía trên desktop, xếp dọc trên màn hình nhỏ.
+- Khoảng cách dọc của PatternFly được override ở form group/header/info area để
+  card luôn nằm gọn trong viewport; title và các action quan trọng không wrap ở
+  desktop, nhưng vẫn cho phép xếp dọc trên màn hình rất hẹp.
+- Card desktop dùng bề rộng tối đa 38rem với padding đối xứng. Helper row của
+  password dùng hai cột `max-content` phân bố đều, còn registration footer trải
+  đủ chiều rộng nên browser zoom/font scaling không làm nội dung bị bó hoặc lệch.
 - Input focus state, primary button và info/register area.
 - Responsive mobile và `prefers-reduced-motion`.
 

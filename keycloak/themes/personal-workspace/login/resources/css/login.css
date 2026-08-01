@@ -7,17 +7,38 @@
 
 body {
   background:
-    radial-gradient(circle at 15% 15%, rgb(99 102 241 / 18%), transparent 32rem),
-    radial-gradient(circle at 85% 80%, rgb(14 165 233 / 12%), transparent 28rem),
-    #f8fafc;
+    linear-gradient(135deg, rgb(15 23 42 / 52%), rgb(49 46 129 / 28%)),
+    url("../img/workspace-auth-background.png") center / cover fixed;
   color: var(--workspace-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.pf-v5-c-login {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  padding: clamp(1rem, 4vw, 3rem);
+}
+
 .pf-v5-c-login__container {
-  grid-template-areas: "main";
-  grid-template-columns: minmax(20rem, 30rem);
-  justify-content: center;
+  display: block;
+  margin: auto;
+  max-width: 38rem;
+  width: 100%;
+}
+
+.pf-v5-c-login__header {
+  margin-block-end: 1rem;
+  padding: 0;
+  text-align: center;
+}
+
+#kc-header-wrapper {
+  color: white;
+  filter: drop-shadow(0 2px 8px rgb(15 23 42 / 45%));
+  font-size: clamp(1.15rem, 3vw, 1.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .pf-v5-c-login__main {
@@ -26,10 +47,14 @@ body {
   border-radius: 1.25rem;
   box-shadow: 0 24px 64px rgb(15 23 42 / 12%);
   overflow: hidden;
+  width: 100%;
 }
 
 .pf-v5-c-login__main-header {
-  padding-block-start: 2.5rem;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 2.5rem 1rem;
   text-align: center;
 }
 
@@ -44,14 +69,76 @@ body {
   font-weight: 800;
   height: 3rem;
   justify-content: center;
-  margin-block-end: 1rem;
+  margin: 0 0 1rem;
   width: 3rem;
 }
 
 #kc-page-title {
-  font-size: 1.5rem;
+  font-size: clamp(1.35rem, 3vw, 1.65rem);
   font-weight: 750;
   letter-spacing: -0.025em;
+  line-height: 1.25;
+  margin: 0;
+  max-width: none;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.pf-v5-c-login__main-body {
+  padding: 0 3rem 2rem;
+}
+
+#kc-form-login {
+  display: grid;
+  gap: 1rem;
+}
+
+#kc-form-login .pf-v5-c-form__group {
+  margin: 0;
+}
+
+#kc-form-options,
+#kc-form-buttons,
+#kc-registration-container {
+  width: 100%;
+}
+
+.pf-v5-c-helper-text.pf-v5-u-justify-content-space-between {
+  align-items: center;
+  display: grid !important;
+  gap: 1rem;
+  grid-template-columns: max-content max-content;
+  justify-content: space-between !important;
+  width: 100%;
+}
+
+.pf-v5-c-helper-text .pf-v5-c-check,
+.pf-v5-c-helper-text .pf-v5-c-check__label,
+.pf-v5-c-helper-text .pf-v5-c-helper-text__item {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.pf-v5-c-helper-text a {
+  white-space: nowrap;
+  text-align: right;
+}
+
+#kc-info {
+  margin: 0;
+}
+
+#kc-info-wrapper {
+  display: block;
+  padding: 1rem 2.5rem;
+  text-align: center;
+  width: 100%;
+}
+
+#kc-registration,
+#kc-registration > span {
+  display: block;
+  width: 100%;
 }
 
 .pf-v5-c-form-control,
@@ -102,6 +189,39 @@ a {
 
   .pf-v5-c-login__main {
     border-radius: 1rem;
+  }
+
+  .pf-v5-c-login__main-body {
+    padding: 0 1.25rem 1.5rem;
+  }
+
+  .pf-v5-c-login__main-header {
+    padding: 1.5rem 1.25rem 1rem;
+  }
+
+  #kc-page-title {
+    font-size: 1.3rem;
+  }
+
+  #kc-info-wrapper {
+    padding: 1rem 1.25rem;
+  }
+}
+
+@media (max-width: 24rem) {
+  #kc-page-title {
+    white-space: normal;
+  }
+
+  .pf-v5-c-helper-text.pf-v5-u-justify-content-space-between {
+    align-items: flex-start;
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pf-v5-c-helper-text a {
+    text-align: left;
   }
 }
 

@@ -23,7 +23,7 @@ export function AppShell() {
           >
             <Menu size={20} />
           </Button>
-          <label className="relative max-w-lg flex-1">
+          <label className="relative min-w-0 max-w-2xl flex-1">
             <span className="sr-only">Search workspace</span>
             <Search className="pointer-events-none absolute left-3 top-2.5 text-slate-400" size={18} />
             <input
@@ -32,9 +32,13 @@ export function AppShell() {
               type="search"
             />
           </label>
-          <span className="hidden text-right sm:block">
-            <span className="block text-sm font-semibold text-slate-800">{user?.displayName}</span>
-            <span className="block text-xs text-slate-500">{user?.username}</span>
+          <span className="ml-auto hidden min-w-0 max-w-56 text-right sm:block">
+            <span className="block truncate text-sm font-semibold text-slate-800" title={user?.displayName}>
+              {user?.displayName}
+            </span>
+            <span className="block truncate text-xs text-slate-500" title={user?.username}>
+              {user?.username}
+            </span>
           </span>
           <Button aria-label="Sign out" onClick={() => void logout()} size="icon" variant="ghost">
             <LogOut size={18} />
