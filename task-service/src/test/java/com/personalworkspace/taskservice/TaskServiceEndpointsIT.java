@@ -1,8 +1,14 @@
 package com.personalworkspace.taskservice;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -13,16 +19,41 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class TaskServiceEndpointsIT {
 
+    private static final String DEFAULT_OWNER = "00000000-0000-0000-0000-000000000001";
+
     private final TestRestTemplate restTemplate;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @Autowired
     TaskServiceEndpointsIT(TestRestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+    }
+
+    @BeforeEach
+    void decodeTestTokens() {
+        given(jwtDecoder.decode(anyString())).willAnswer(invocation -> {
+            String token = invocation.getArgument(0);
+            boolean hasRole = !token.startsWith("no-role-");
+            String subject = token.replace("no-role-", "");
+            return Jwt.withTokenValue(token)
+                    .header("alg", "none")
+                    .subject(subject)
+                    .issuedAt(Instant.now().minusSeconds(30))
+                    .expiresAt(Instant.now().plusSeconds(300))
+                    .claim("realm_access",
+                            Map.of("roles", hasRole ? List.of("USER") : List.of()))
+                    .build();
+        });
     }
 
     @Test
@@ -73,7 +104,8 @@ class TaskServiceEndpointsIT {
                 .contains("\"status\":\"TODO\"");
 
         String location = created.getHeaders().getLocation().toString();
-        ResponseEntity<String> fetched = restTemplate.getForEntity(location, String.class);
+        ResponseEntity<String> fetched = restTemplate.exchange(
+                location, HttpMethod.GET, ownerRequest(DEFAULT_OWNER), String.class);
         assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(fetched.getBody()).contains("\"description\":\"PER-25\"");
     }
@@ -118,8 +150,9 @@ class TaskServiceEndpointsIT {
         assertThat(taskCreated.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(taskCreated.getBody()).contains("\"taskListId\":\"" + listId + "\"");
 
-        ResponseEntity<String> tasks =
-                restTemplate.getForEntity(listLocation + "/tasks", String.class);
+        ResponseEntity<String> tasks = restTemplate.exchange(
+                listLocation + "/tasks", HttpMethod.GET,
+                ownerRequest(DEFAULT_OWNER), String.class);
         assertThat(tasks.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(tasks.getBody()).contains("\"title\":\"Task thuộc list\"");
     }
@@ -195,22 +228,41 @@ class TaskServiceEndpointsIT {
         assertThat(fetched.getBody()).doesNotContain("\"version\":0");
     }
 
+    @Test
+    void apiRequiresJwtAndExpectedRole() {
+        ResponseEntity<String> noToken =
+                restTemplate.getForEntity("/api/v1/tasks", String.class);
+        ResponseEntity<String> wrongRole = restTemplate.exchange(
+                "/api/v1/tasks", HttpMethod.GET,
+                bearerRequest("no-role-" + DEFAULT_OWNER), String.class);
+
+        assertThat(noToken.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(wrongRole.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
     private HttpEntity<String> jsonRequest(String body) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(DEFAULT_OWNER);
         return new HttpEntity<>(body, headers);
     }
 
     private HttpEntity<String> ownerJsonRequest(String ownerId, String body) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("X-Owner-Id", ownerId);
+        headers.setBearerAuth(ownerId);
         return new HttpEntity<>(body, headers);
     }
 
     private HttpEntity<Void> ownerRequest(String ownerId) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Owner-Id", ownerId);
+        headers.setBearerAuth(ownerId);
+        return new HttpEntity<>(headers);
+    }
+
+    private HttpEntity<Void> bearerRequest(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
         return new HttpEntity<>(headers);
     }
 }

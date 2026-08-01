@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8090/realms/personal-workspace}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8090/realms/personal-workspace/protocol/openid-connect/certs}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:2000}
+            response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:5s}
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+                allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+                allowed-headers: Authorization,Content-Type,X-Correlation-Id
+                exposed-headers: Location,X-Correlation-Id
+                allow-credentials: false
+                max-age: 3600
+          routes:
+            - id: task-service
+              uri: ${TASK_SERVICE_URI:http://localhost:8081}
+              predicates:
+                - Path=/api/v1/tasks/**,/api/v1/task-lists/**,/api/v1/task-tags/**
+            - id: file-service
+              uri: ${FILE_SERVICE_URI:http://localhost:8082}
+              predicates:
+                - Path=/api/v1/files/**,/api/v1/folders/**
+
+server:
+  port: ${SERVER_PORT:8080}
+
+security:
+  jwt:
+    audience: ${OAUTH2_AUDIENCE:workspace-api}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,3 +1,10 @@
 # Test dùng random port để tránh xung đột với service đang chạy trên máy.
 server:
   port: 0
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost.invalid/jwks

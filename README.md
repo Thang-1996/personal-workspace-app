@@ -23,7 +23,9 @@ Sau khi service khởi động:
 - Info: <http://localhost:8081/actuator/info>
 - Swagger UI: <http://localhost:8081/swagger-ui.html>
 - OpenAPI JSON: <http://localhost:8081/v3/api-docs>
-- Task API: <http://localhost:8081/api/v1/tasks>
+- Public API Gateway: <http://localhost:8080>
+- Task API trực tiếp: <http://localhost:8081/api/v1/tasks>
+- Keycloak: <http://localhost:8090>
 - Task List API: <http://localhost:8081/api/v1/task-lists>
 
 Mặc định service dùng H2 in-memory. Chạy PostgreSQL local bằng:
@@ -37,8 +39,11 @@ DB_PASSWORD=task_service_local \
 mvn -pl task-service spring-boot:run
 ```
 
-Flyway quản lý schema ở cả H2 và PostgreSQL. API tạm dùng header `X-Owner-Id`;
-nếu không truyền, service dùng dev owner `00000000-0000-0000-0000-000000000001`.
+Flyway quản lý schema ở cả H2 và PostgreSQL. Từ PER-10, API yêu cầu Bearer JWT hợp lệ;
+`owner_id` được lấy từ claim `sub`, không còn tin header `X-Owner-Id`.
+
+Chi tiết Gateway, Keycloak, tài khoản local, cấu hình và phần kiến thức:
+[docs/PER-10-implementation.md](docs/PER-10-implementation.md).
 Danh sách task hỗ trợ filter, pagination và sort:
 
 ```text
