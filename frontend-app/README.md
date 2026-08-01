@@ -11,7 +11,7 @@ npm run check
 ```
 
 Vite serves the UI on `http://localhost:5173` and proxies `/api` to the Task Service on `http://localhost:8081`.
-Copy `.env.example` to `.env.local`. Set `VITE_ENABLE_API=true` when the backend is running.
+Copy `.env.example` to `.env.local` when the API base path needs to be overridden.
 
 ## Architecture
 
@@ -27,8 +27,10 @@ Server state belongs to TanStack Query. Zustand is limited to ephemeral client U
 
 The visual foundation follows the PER-8 wireframe direction: fixed navigation, compact top bar, page header, dashboard metrics and task cards. Tokens use indigo/blue primary colors, neutral slate, rounded cards and subtle shadows.
 
-- Tasks dashboard: implemented.
-- Task creation modal: implemented with validation.
+- Tasks dashboard: integrated with Task Service metrics.
+- Task list: search, filters, URL state and pagination.
+- Task creation modal: integrated with API and validation.
+- Task detail drawer: view, edit, delete and optimistic status toggle.
 - Files: routed placeholder for its feature story.
 - Chat: routed placeholder for its feature story.
 - Search: routed placeholder for its feature story.
