@@ -14,6 +14,11 @@ fragment. `ProtectedRoute` không tự gọi `login()` lần hai; Keycloak adapt
 đầu mối duy nhất bắt đầu navigation. Điều này loại race giữa `initialized` và
 React state `authenticated` từng gây redirect loop sau callback.
 
+Keycloak initialization được memoize ở module scope để React `StrictMode` có thể
+mount effect hai lần trong development mà không gọi `keycloak.init()` hai lần.
+Nếu token exchange hoặc khởi tạo authentication thất bại, ứng dụng hiển thị lỗi
+và nút đăng nhập lại thay vì giữ loading skeleton vô hạn như một trang trắng.
+
 `ProtectedRoute` chỉ còn hai trạng thái:
 
 - Loading skeleton trong lúc adapter khởi tạo/chuyển trang.
