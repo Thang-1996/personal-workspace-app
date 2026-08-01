@@ -1,0 +1,14 @@
+# Production lấy port từ biến môi trường; giá trị mặc định vẫn tuân theo PER-25.
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+management:
+  endpoint:
+    health:
+      show-details: never
