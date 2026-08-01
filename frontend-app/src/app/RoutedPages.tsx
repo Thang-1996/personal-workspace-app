@@ -6,6 +6,11 @@ const DashboardPage = lazy(() =>
     default: module.DashboardPage,
   })),
 )
+const FilesPage = lazy(() =>
+  import('../features/files/pages/FilesPage').then((module) => ({
+    default: module.FilesPage,
+  })),
+)
 
 function AsyncPage({ children }: { children: ReactNode }) {
   return <Suspense fallback={<Skeleton />}>{children}</Suspense>
@@ -13,4 +18,8 @@ function AsyncPage({ children }: { children: ReactNode }) {
 
 export function TasksRoute() {
   return <AsyncPage><DashboardPage /></AsyncPage>
+}
+
+export function FilesRoute() {
+  return <AsyncPage><FilesPage /></AsyncPage>
 }

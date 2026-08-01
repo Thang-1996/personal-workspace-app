@@ -30,6 +30,17 @@ export const httpClient = axios.create({
   },
 })
 
+let accessToken: string | undefined
+
+export function setAccessToken(token?: string) {
+  accessToken = token
+}
+
+httpClient.interceptors.request.use((config) => {
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`
+  return config
+})
+
 httpClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ProblemDetails>) => {

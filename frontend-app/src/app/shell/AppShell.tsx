@@ -1,11 +1,13 @@
-import { Menu, Search } from 'lucide-react'
+import { LogOut, Menu, Search } from 'lucide-react'
 import { Outlet } from 'react-router-dom'
 import { useUiStore } from '../store/uiStore'
 import { Button } from '../../shared/ui/Button'
 import { Sidebar } from './Sidebar'
+import { useAuth } from '../../features/auth/authContext'
 
 export function AppShell() {
   const toggleSidebar = useUiStore((state) => state.toggleSidebar)
+  const { logout, user } = useAuth()
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -30,13 +32,13 @@ export function AppShell() {
               type="search"
             />
           </label>
-          <button
-            aria-label="Open user profile"
-            className="grid size-10 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-700"
-            type="button"
-          >
-            MT
-          </button>
+          <span className="hidden text-right sm:block">
+            <span className="block text-sm font-semibold text-slate-800">{user?.displayName}</span>
+            <span className="block text-xs text-slate-500">{user?.username}</span>
+          </span>
+          <Button aria-label="Sign out" onClick={() => void logout()} size="icon" variant="ghost">
+            <LogOut size={18} />
+          </Button>
         </header>
         <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
           <Outlet />
