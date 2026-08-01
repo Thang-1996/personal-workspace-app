@@ -1,0 +1,7 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8090/realms/personal-workspace
+          jwk-set-uri: http://keycloak:8080/realms/personal-workspace/protocol/openid-connect/certs

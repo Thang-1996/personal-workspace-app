@@ -1,4 +1,18 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.0
+    container_name: personal-workspace-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:8090
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import:ro
+
   task-postgres:
     image: postgres:17-alpine
     container_name: task-postgres
@@ -7,7 +21,7 @@ services:
       POSTGRES_USER: task_service
       POSTGRES_PASSWORD: task_service_local
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - task-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +30,41 @@ services:
       timeout: 3s
       retries: 10
       start_period: 5s
+
+  task-service:
+    build:
+      context: .
+      dockerfile: task-service/Dockerfile
+    container_name: task-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://task-postgres:5432/task_db
+      DB_USERNAME: task_service
+      DB_PASSWORD: task_service_local
+    ports:
+      - "${TASK_SERVICE_HOST_PORT:-8181}:8081"
+    depends_on:
+      task-postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: api-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      TASK_SERVICE_URI: http://task-service:8081
+      FILE_SERVICE_URI: http://file-service:8082
+    ports:
+      - "8080:8080"
+    depends_on:
+      task-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
 
 volumes:
   task-postgres-data:

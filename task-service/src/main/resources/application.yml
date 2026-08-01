@@ -1,6 +1,16 @@
 spring:
   application:
     name: task-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8090/realms/personal-workspace}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:8090/realms/personal-workspace/protocol/openid-connect/certs}
+
+security:
+  jwt:
+    audience: ${OAUTH2_AUDIENCE:workspace-api}
   datasource:
     url: ${DB_URL:jdbc:h2:mem:taskdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     username: ${DB_USERNAME:sa}

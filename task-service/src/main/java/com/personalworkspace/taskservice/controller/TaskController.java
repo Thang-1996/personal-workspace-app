@@ -8,6 +8,7 @@ import com.personalworkspace.taskservice.dto.task.TaskFilter;
 import com.personalworkspace.taskservice.entity.TaskPriority;
 import com.personalworkspace.taskservice.entity.TaskStatus;
 import com.personalworkspace.taskservice.service.TaskService;
+import com.personalworkspace.taskservice.security.AuthenticatedOwner;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,7 +50,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Tasks", description = "Tạo, tra cứu, cập nhật và xóa công việc")
 public class TaskController {
 
-    private static final String DEV_OWNER = "00000000-0000-0000-0000-000000000001";
     private final TaskService taskService;
 
     @PostMapping
@@ -56,8 +58,9 @@ public class TaskController {
     @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     public ResponseEntity<TaskResponse> create(
-            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CreateTaskRequest request) {
+        UUID ownerId = AuthenticatedOwner.from(jwt);
         TaskResponse created = taskService.create(ownerId, request);
         return ResponseEntity.created(URI.create("/api/v1/tasks/" + created.id())).body(created);
     }
@@ -68,15 +71,15 @@ public class TaskController {
     @ApiResponse(responseCode = "404", description = "Không tìm thấy task",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     public TaskResponse get(
-            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID taskId) {
-        return taskService.get(ownerId, taskId);
+        return taskService.get(AuthenticatedOwner.from(jwt), taskId);
     }
 
     @GetMapping
     @Operation(summary = "Liệt kê task", description = "Có thể lọc theo trạng thái; bỏ trống để lấy tất cả.")
     public Page<TaskResponse> list(
-            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @AuthenticationPrincipal Jwt jwt,
             @Parameter(description = "Trạng thái cần lọc", example = "TODO")
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) TaskPriority priority,
@@ -87,7 +90,7 @@ public class TaskController {
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
-        return taskService.list(ownerId,
+        return taskService.list(AuthenticatedOwner.from(jwt),
                 new TaskFilter(status, priority, listId, tagId, dueFrom, dueTo, keyword),
                 pageable);
     }
@@ -100,18 +103,18 @@ public class TaskController {
     @ApiResponse(responseCode = "404", description = "Không tìm thấy task hoặc task list",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     public TaskResponse update(
-            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID taskId, @Valid @RequestBody UpdateTaskRequest request) {
-        return taskService.update(ownerId, taskId, request);
+        return taskService.update(AuthenticatedOwner.from(jwt), taskId, request);
     }
 
     @PatchMapping("/{taskId}/status")
     @Operation(summary = "Thay đổi trạng thái task")
     public TaskResponse changeStatus(
-            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID taskId,
             @Valid @RequestBody ChangeTaskStatusRequest request) {
-        return taskService.changeStatus(ownerId, taskId, request.status());
+        return taskService.changeStatus(AuthenticatedOwner.from(jwt), taskId, request.status());
     }
 
     @DeleteMapping("/{taskId}")
@@ -120,9 +123,9 @@ public class TaskController {
     @ApiResponse(responseCode = "404", description = "Không tìm thấy task",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     public ResponseEntity<Void> delete(
-            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID taskId) {
-        taskService.delete(ownerId, taskId);
+        taskService.delete(AuthenticatedOwner.from(jwt), taskId);
         return ResponseEntity.noContent().build();
     }
 }
