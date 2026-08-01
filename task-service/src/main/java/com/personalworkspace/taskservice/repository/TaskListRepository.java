@@ -6,5 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TaskListRepository extends JpaRepository<TaskList, UUID> {
 
-    boolean existsByNameIgnoreCase(String name);
+    boolean existsByOwnerIdAndNameIgnoreCase(UUID ownerId, String name);
+
+    java.util.Optional<TaskList> findByIdAndOwnerId(UUID id, UUID ownerId);
+
+    java.util.List<TaskList> findAllByOwnerIdOrderByPositionAscNameAsc(UUID ownerId);
 }

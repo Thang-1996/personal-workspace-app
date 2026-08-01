@@ -3,6 +3,7 @@ package com.personalworkspace.taskservice.controller;
 import com.personalworkspace.taskservice.dto.task.TaskResponse;
 import com.personalworkspace.taskservice.dto.tasklist.TaskListRequest;
 import com.personalworkspace.taskservice.dto.tasklist.TaskListResponse;
+import com.personalworkspace.taskservice.dto.tasklist.PatchTaskListRequest;
 import com.personalworkspace.taskservice.service.TaskListService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,6 +24,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
 @RestController
 @RequestMapping("/api/v1/task-lists")
@@ -30,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Task Lists", description = "Quản lý danh sách dùng để phân nhóm công việc")
 public class TaskListController {
 
+    private static final String DEV_OWNER = "00000000-0000-0000-0000-000000000001";
     private final TaskListService taskListService;
 
     @PostMapping
@@ -39,28 +46,40 @@ public class TaskListController {
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     @ApiResponse(responseCode = "409", description = "Tên task list đã tồn tại",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
-    public ResponseEntity<TaskListResponse> create(@Valid @RequestBody TaskListRequest request) {
-        TaskListResponse created = taskListService.create(request);
+    public ResponseEntity<TaskListResponse> create(
+            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @Valid @RequestBody TaskListRequest request) {
+        TaskListResponse created = taskListService.create(ownerId, request);
         return ResponseEntity.created(URI.create("/api/v1/task-lists/" + created.id()))
                 .body(created);
     }
 
     @GetMapping
     @Operation(summary = "Liệt kê task list")
-    public List<TaskListResponse> list() { return taskListService.list(); }
+    public List<TaskListResponse> list(
+            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId) {
+        return taskListService.list(ownerId);
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "Lấy chi tiết task list")
     @ApiResponse(responseCode = "404", description = "Không tìm thấy task list",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
-    public TaskListResponse get(@PathVariable UUID id) { return taskListService.get(id); }
+    public TaskListResponse get(
+            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @PathVariable UUID id) {
+        return taskListService.get(ownerId, id);
+    }
 
     @GetMapping("/{id}/tasks")
     @Operation(summary = "Liệt kê task thuộc một task list")
     @ApiResponse(responseCode = "404", description = "Không tìm thấy task list",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
-    public List<TaskResponse> getTasks(@PathVariable UUID id) {
-        return taskListService.getTasks(id);
+    public Page<TaskResponse> getTasks(
+            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @PathVariable UUID id,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        return taskListService.getTasks(ownerId, id, pageable);
     }
 
     @PutMapping("/{id}")
@@ -72,8 +91,17 @@ public class TaskListController {
     @ApiResponse(responseCode = "409", description = "Tên task list đã tồn tại",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     public TaskListResponse update(
+            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
             @PathVariable UUID id, @Valid @RequestBody TaskListRequest request) {
-        return taskListService.update(id, request);
+        return taskListService.update(ownerId, id, request);
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Cập nhật một phần task list")
+    public TaskListResponse patch(
+            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @PathVariable UUID id, @Valid @RequestBody PatchTaskListRequest request) {
+        return taskListService.patch(ownerId, id, request);
     }
 
     @DeleteMapping("/{id}")
@@ -81,8 +109,10 @@ public class TaskListController {
     @ApiResponse(responseCode = "204", description = "Đã xóa task list")
     @ApiResponse(responseCode = "404", description = "Không tìm thấy task list",
             content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        taskListService.delete(id);
+    public ResponseEntity<Void> delete(
+            @RequestHeader(name = "X-Owner-Id", defaultValue = DEV_OWNER) UUID ownerId,
+            @PathVariable UUID id) {
+        taskListService.delete(ownerId, id);
         return ResponseEntity.noContent().build();
     }
 }

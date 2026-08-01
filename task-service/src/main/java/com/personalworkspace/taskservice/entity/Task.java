@@ -9,11 +9,15 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -32,6 +36,9 @@ public class Task {
     @Id
     private UUID id;
 
+    @Column(name = "owner_id", nullable = false)
+    private UUID ownerId;
+
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -42,9 +49,28 @@ public class Task {
     @Column(nullable = false, length = 30)
     private TaskStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TaskPriority priority;
+
+    @Column(name = "due_at")
+    private Instant dueAt;
+
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
+    @Column(nullable = false)
+    private int position;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_list_id")
     private TaskList taskList;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "task_tag_relations",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private Set<TaskTag> tags = new LinkedHashSet<>();
 
     /** Optimistic locking ngăn request cũ âm thầm ghi đè thay đổi mới. */
     @Version
@@ -57,16 +83,24 @@ public class Task {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    private Task(UUID id, String title, String description) {
+    private Task(UUID id, UUID ownerId, String title, String description) {
         this.id = Objects.requireNonNull(id);
+        this.ownerId = Objects.requireNonNull(ownerId);
         this.title = normalizeRequired(title);
         this.description = normalizeOptional(description);
         this.status = TaskStatus.TODO;
+        this.priority = TaskPriority.MEDIUM;
     }
 
-    public static Task create(String title, String description, TaskList taskList) {
-        Task task = new Task(UUID.randomUUID(), title, description);
+    public static Task create(
+            UUID ownerId, String title, String description, TaskPriority priority,
+            Instant dueAt, int position, TaskList taskList, Set<TaskTag> tags) {
+        Task task = new Task(UUID.randomUUID(), ownerId, title, description);
+        task.priority = priority == null ? TaskPriority.MEDIUM : priority;
+        task.dueAt = dueAt;
+        task.position = position;
         task.taskList = taskList;
+        task.replaceTags(tags);
         return task;
     }
 
@@ -77,10 +111,24 @@ public class Task {
 
     public void changeStatus(TaskStatus newStatus) {
         this.status = Objects.requireNonNull(newStatus, "status không được null");
+        this.completedAt = newStatus == TaskStatus.DONE ? Instant.now() : null;
     }
 
     public void moveTo(TaskList taskList) {
         this.taskList = taskList;
+    }
+
+    public void reschedule(TaskPriority priority, Instant dueAt, int position) {
+        this.priority = Objects.requireNonNull(priority, "priority không được null");
+        this.dueAt = dueAt;
+        this.position = position;
+    }
+
+    public void replaceTags(Set<TaskTag> tags) {
+        this.tags.clear();
+        if (tags != null) {
+            this.tags.addAll(tags);
+        }
     }
 
     @PrePersist
