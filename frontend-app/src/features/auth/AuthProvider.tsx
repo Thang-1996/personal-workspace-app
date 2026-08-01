@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } fro
 import { setAccessToken } from '../../shared/api/httpClient'
 import { env } from '../../shared/config/env'
 import { AuthContext, type WorkspaceUser } from './authContext'
+import { currentApplicationUrl } from './redirectUri'
 
 type WorkspaceToken = KeycloakTokenParsed & {
   preferred_username?: string
@@ -41,7 +42,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         onLoad: 'login-required',
         pkceMethod: 'S256',
         checkLoginIframe: false,
-        redirectUri: window.location.href,
+        redirectUri: currentApplicationUrl(),
       })
       .then(() => {
         if (!active) return
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [queryClient, synchronizeSession])
 
   const login = useCallback(async () => {
-    await keycloak.login({ redirectUri: window.location.href })
+    await keycloak.login({ redirectUri: currentApplicationUrl() })
   }, [])
 
   const logout = useCallback(async () => {

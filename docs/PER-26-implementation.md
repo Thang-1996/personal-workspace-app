@@ -9,13 +9,15 @@ có SSO session, Keycloak JS chuyển thẳng tới Identity Provider bằng
 Authorization Code + PKCE S256. Màn hình “Continue to sign in” trung gian đã bị
 loại bỏ.
 
+Callback URL được dựng từ `origin + pathname + search`, chủ động bỏ OAuth hash
+fragment. `ProtectedRoute` không tự gọi `login()` lần hai; Keycloak adapter là
+đầu mối duy nhất bắt đầu navigation. Điều này loại race giữa `initialized` và
+React state `authenticated` từng gây redirect loop sau callback.
+
 `ProtectedRoute` chỉ còn hai trạng thái:
 
 - Loading skeleton trong lúc adapter khởi tạo/chuyển trang.
 - Render ứng dụng sau khi authenticated.
-
-Fallback effect gọi `login()` nếu adapter init xong nhưng chưa authenticated,
-giúp tránh màn hình trắng khi browser/session có trạng thái biên.
 
 ### Keycloak realm
 
@@ -35,7 +37,8 @@ giúp tránh màn hình trắng khi browser/session có trạng thái biên.
 Theme nằm tại `keycloak/themes/personal-workspace/login` và được mount read-only
 vào container. Theme kế thừa `keycloak.v2`, chỉ override CSS:
 
-- Brand gradient/logo badge, màu indigo, typography và card.
+- Background illustration riêng, brand gradient/logo badge, màu indigo,
+  typography và card căn giữa viewport.
 - Input focus state, primary button và info/register area.
 - Responsive mobile và `prefers-reduced-motion`.
 
