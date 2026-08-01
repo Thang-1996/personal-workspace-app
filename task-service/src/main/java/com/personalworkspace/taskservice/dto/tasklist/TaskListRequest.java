@@ -12,4 +12,11 @@ public record TaskListRequest(
         String name,
         @Schema(description = "Mô tả danh sách", example = "Các công việc cần hoàn thành")
         @Size(max = 500, message = "description tối đa 500 ký tự")
-        String description) {}
+        String description,
+        @Schema(description = "Màu hiển thị dạng hex", example = "#2563EB")
+        @Size(max = 20, message = "color tối đa 20 ký tự")
+        String color,
+        @Schema(example = "0")
+        int position,
+        @Schema(example = "false")
+        boolean archived) {}

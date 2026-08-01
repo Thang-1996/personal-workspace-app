@@ -25,7 +25,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({TaskNotFoundException.class, TaskListNotFoundException.class})
+    @ExceptionHandler({
+            TaskNotFoundException.class, TaskListNotFoundException.class,
+            TaskTagNotFoundException.class})
     ResponseEntity<ProblemDetail> handleNotFound(RuntimeException exception) {
         ProblemDetail problem =
                 ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
@@ -34,7 +36,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
     }
 
-    @ExceptionHandler({DuplicateTaskListException.class, IllegalStateException.class})
+    @ExceptionHandler({
+            DuplicateTaskListException.class, DuplicateTaskTagException.class,
+            IllegalStateException.class, org.springframework.orm.ObjectOptimisticLockingFailureException.class})
     ResponseEntity<ProblemDetail> handleConflict(RuntimeException exception) {
         ProblemDetail problem =
                 ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());

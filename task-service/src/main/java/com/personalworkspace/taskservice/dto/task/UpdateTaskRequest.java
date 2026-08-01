@@ -1,11 +1,14 @@
 package com.personalworkspace.taskservice.dto.task;
 
 import com.personalworkspace.taskservice.entity.TaskStatus;
+import com.personalworkspace.taskservice.entity.TaskPriority;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
+import java.time.Instant;
+import java.util.Set;
 
 @Schema(description = "Dữ liệu thay thế một task")
 public record UpdateTaskRequest(
@@ -21,4 +24,12 @@ public record UpdateTaskRequest(
         TaskStatus status,
         @Schema(description = "Task list chứa task; null để bỏ phân nhóm",
                 example = "8f4f77c0-5d25-4df7-b353-d023ab92a565")
-        UUID taskListId) {}
+        UUID taskListId,
+        @NotNull(message = "priority không được null")
+        @Schema(example = "HIGH")
+        TaskPriority priority,
+        @Schema(example = "2026-08-15T10:00:00Z")
+        Instant dueAt,
+        @Schema(example = "0")
+        int position,
+        Set<UUID> tagIds) {}
