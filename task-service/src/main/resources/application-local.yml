@@ -1,0 +1,5 @@
+# Profile local dành cho cấu hình máy phát triển. Không chứa secret thật.
+management:
+  endpoint:
+    health:
+      show-details: always
