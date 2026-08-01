@@ -7,5 +7,6 @@ package com.personalworkspace.taskservice.entity;
 public enum TaskStatus {
     TODO,
     IN_PROGRESS,
-    DONE
+    DONE,
+    ARCHIVED
 }

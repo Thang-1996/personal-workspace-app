@@ -26,8 +26,28 @@ Sau khi service khởi động:
 - Task API: <http://localhost:8081/api/v1/tasks>
 - Task List API: <http://localhost:8081/api/v1/task-lists>
 
-Mặc định service dùng H2 in-memory. Profile `prod` dùng PostgreSQL qua `DB_URL`,
-`DB_USERNAME`, `DB_PASSWORD`; Flyway quản lý schema ở cả hai môi trường.
+Mặc định service dùng H2 in-memory. Chạy PostgreSQL local bằng:
+
+```bash
+docker compose up -d task-postgres
+SPRING_PROFILES_ACTIVE=prod \
+DB_URL=jdbc:postgresql://localhost:5432/task_db \
+DB_USERNAME=task_service \
+DB_PASSWORD=task_service_local \
+mvn -pl task-service spring-boot:run
+```
+
+Flyway quản lý schema ở cả H2 và PostgreSQL. API tạm dùng header `X-Owner-Id`;
+nếu không truyền, service dùng dev owner `00000000-0000-0000-0000-000000000001`.
+Danh sách task hỗ trợ filter, pagination và sort:
+
+```text
+GET /api/v1/tasks?status=TODO&priority=HIGH&listId=...&tagId=...
+    &dueFrom=2026-08-01T00:00:00Z&dueTo=2026-08-31T23:59:59Z
+    &keyword=postgres&page=0&size=20&sort=dueAt,asc
+```
 
 Xem tài liệu triển khai và kiến thức của PER-25 tại
 [`docs/PER-25-implementation.md`](docs/PER-25-implementation.md).
+Tài liệu thiết kế domain, database và kiến thức của PER-7:
+[`docs/PER-7-implementation.md`](docs/PER-7-implementation.md).

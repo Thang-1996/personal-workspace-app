@@ -23,11 +23,23 @@ public class TaskList {
     @Id
     private UUID id;
 
+    @Column(name = "owner_id", nullable = false)
+    private UUID ownerId;
+
     @Column(nullable = false, length = 100)
     private String name;
 
     @Column(length = 500)
     private String description;
+
+    @Column(length = 20)
+    private String color;
+
+    @Column(nullable = false)
+    private int position;
+
+    @Column(nullable = false)
+    private boolean archived;
 
     @Version
     @Column(nullable = false)
@@ -39,22 +51,28 @@ public class TaskList {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    private TaskList(String name, String description) {
+    private TaskList(UUID ownerId, String name, String description, String color, int position) {
         this.id = UUID.randomUUID();
-        update(name, description);
+        this.ownerId = Objects.requireNonNull(ownerId);
+        update(name, description, color, position, false);
     }
 
-    public static TaskList create(String name, String description) {
-        return new TaskList(name, description);
+    public static TaskList create(
+            UUID ownerId, String name, String description, String color, int position) {
+        return new TaskList(ownerId, name, description, color, position);
     }
 
-    public void update(String name, String description) {
+    public void update(
+            String name, String description, String color, int position, boolean archived) {
         String normalizedName = Objects.requireNonNull(name, "name không được null").trim();
         if (normalizedName.isEmpty()) {
             throw new IllegalArgumentException("name không được để trống");
         }
         this.name = normalizedName;
         this.description = description == null || description.isBlank() ? null : description.trim();
+        this.color = color == null || color.isBlank() ? null : color.trim();
+        this.position = position;
+        this.archived = archived;
     }
 
     @PrePersist
