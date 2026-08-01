@@ -12,6 +12,7 @@ services:
       - "8090:8080"
     volumes:
       - ./keycloak/import:/opt/keycloak/data/import:ro
+      - ./keycloak/themes/personal-workspace:/opt/keycloak/themes/personal-workspace:ro
 
   task-postgres:
     image: postgres:17-alpine

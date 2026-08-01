@@ -38,9 +38,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     let active = true
     keycloak
       .init({
-        onLoad: 'check-sso',
+        onLoad: 'login-required',
         pkceMethod: 'S256',
         checkLoginIframe: false,
+        redirectUri: window.location.href,
       })
       .then(() => {
         if (!active) return
