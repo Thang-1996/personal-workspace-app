@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { createStatusMutationOptions, taskKeys } from './taskQueries'
+import { createStatusMutationOptions, taskKeys, upsertTaskAcrossListCaches } from './taskQueries'
 import type { PageResponse, Task } from '../model/task'
 
 vi.mock('./taskApi', () => ({
@@ -38,5 +38,29 @@ describe('optimistic status mutation', () => {
     options.onError(new Error('network unavailable'), variables, context)
 
     expect(queryClient.getQueryData<PageResponse<Task>>(key)?.content[0].status).toBe('TODO')
+  })
+})
+
+describe('targeted create cache update', () => {
+  it('updates only matching list and metric caches without invalidating queries', () => {
+    const queryClient = new QueryClient()
+    const allFilters = { page: 0, size: 8, sort: 'createdAt,desc' }
+    const todoFilters = { ...allFilters, size: 1, status: 'TODO' as const }
+    const doneFilters = { ...allFilters, size: 1, status: 'DONE' as const }
+    const emptyPage = (size: number): PageResponse<Task> => ({
+      content: [],
+      page: { size, number: 0, totalElements: 0, totalPages: 0 },
+    })
+    queryClient.setQueryData(taskKeys.list(allFilters), emptyPage(8))
+    queryClient.setQueryData(taskKeys.list(todoFilters), emptyPage(1))
+    queryClient.setQueryData(taskKeys.list(doneFilters), emptyPage(1))
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    upsertTaskAcrossListCaches(queryClient, task)
+
+    expect(queryClient.getQueryData<PageResponse<Task>>(taskKeys.list(allFilters))?.content).toEqual([task])
+    expect(queryClient.getQueryData<PageResponse<Task>>(taskKeys.list(todoFilters))?.page.totalElements).toBe(1)
+    expect(queryClient.getQueryData<PageResponse<Task>>(taskKeys.list(doneFilters))?.page.totalElements).toBe(0)
+    expect(invalidateSpy).not.toHaveBeenCalled()
   })
 })

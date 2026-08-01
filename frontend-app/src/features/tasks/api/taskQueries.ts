@@ -51,8 +51,8 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: (payload: TaskPayload) => createTask(payload),
     onSuccess: (task) => {
+      upsertTaskAcrossListCaches(queryClient, task)
       queryClient.setQueryData(taskKeys.detail(task.id), task)
-      return queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
     },
   })
 }
@@ -63,8 +63,9 @@ export function useUpdateTask() {
     mutationFn: ({ taskId, payload }: { taskId: string; payload: UpdateTaskPayload }) =>
       updateTask(taskId, payload),
     onSuccess: (task) => {
+      const previousTask = findTaskInCache(queryClient, task.id)
+      upsertTaskAcrossListCaches(queryClient, task, previousTask)
       queryClient.setQueryData(taskKeys.detail(task.id), task)
-      return queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
     },
   })
 }
@@ -74,8 +75,9 @@ export function useDeleteTask() {
   return useMutation({
     mutationFn: deleteTask,
     onSuccess: (_data, taskId) => {
+      const deletedTask = findTaskInCache(queryClient, taskId)
+      if (deletedTask) removeTaskAcrossListCaches(queryClient, deletedTask)
       queryClient.removeQueries({ queryKey: taskKeys.detail(taskId) })
-      return queryClient.invalidateQueries({ queryKey: taskKeys.lists() })
     },
   })
 }
@@ -92,24 +94,16 @@ export function createStatusMutationOptions(queryClient: QueryClient) {
     onMutate: async ({ taskId, status }: { taskId: string; status: TaskStatus }): Promise<OptimisticContext> => {
       await queryClient.cancelQueries({ queryKey: taskKeys.all })
       const listSnapshots = queryClient.getQueriesData<PageResponse<Task>>({ queryKey: taskKeys.lists() })
-      const detailSnapshot = queryClient.getQueryData<Task>(taskKeys.detail(taskId))
+      const detailSnapshot = findTaskInCache(queryClient, taskId)
       const completedAt = status === 'DONE' ? new Date().toISOString() : null
-
-      for (const [key, page] of listSnapshots) {
-        if (!page) continue
-        queryClient.setQueryData<PageResponse<Task>>(key, {
-          ...page,
-          content: page.content.map((task) =>
-            task.id === taskId ? { ...task, status, completedAt } : task,
-          ),
-        })
-      }
       if (detailSnapshot) {
-        queryClient.setQueryData<Task>(taskKeys.detail(taskId), {
+        const optimisticTask = {
           ...detailSnapshot,
           status,
           completedAt,
-        })
+        }
+        upsertTaskAcrossListCaches(queryClient, optimisticTask, detailSnapshot)
+        queryClient.setQueryData<Task>(taskKeys.detail(taskId), optimisticTask)
       }
       return { listSnapshots, detailSnapshot }
     },
@@ -119,14 +113,116 @@ export function createStatusMutationOptions(queryClient: QueryClient) {
         queryClient.setQueryData(taskKeys.detail(variables.taskId), context.detailSnapshot)
       }
     },
-    onSuccess: (task: Task) => queryClient.setQueryData(taskKeys.detail(task.id), task),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: taskKeys.all }),
+    onSuccess: (task: Task) => {
+      const optimisticTask = findTaskInCache(queryClient, task.id)
+      upsertTaskAcrossListCaches(queryClient, task, optimisticTask)
+      queryClient.setQueryData(taskKeys.detail(task.id), task)
+    },
   }
 }
 
 export function useChangeStatus() {
   const queryClient = useQueryClient()
   return useMutation(createStatusMutationOptions(queryClient))
+}
+
+function filtersFromKey(key: readonly unknown[]): TaskFilters | undefined {
+  if (key[0] !== 'tasks' || key[1] !== 'list') return undefined
+  return key[2] as TaskFilters | undefined
+}
+
+export function taskMatchesFilters(task: Task, filters: TaskFilters) {
+  if (filters.status && task.status !== filters.status) return false
+  if (filters.priority && task.priority !== filters.priority) return false
+  if (filters.listId && task.taskListId !== filters.listId) return false
+  if (filters.keyword) {
+    const keyword = filters.keyword.trim().toLocaleLowerCase()
+    const searchable = `${task.title} ${task.description ?? ''}`.toLocaleLowerCase()
+    if (!searchable.includes(keyword)) return false
+  }
+  if (filters.dueFrom && (!task.dueAt || new Date(task.dueAt) < new Date(filters.dueFrom))) return false
+  if (filters.dueTo && (!task.dueAt || new Date(task.dueAt) > new Date(filters.dueTo))) return false
+  return true
+}
+
+function sortTasks(tasks: Task[], sort: string) {
+  const [field, direction = 'asc'] = sort.split(',')
+  const multiplier = direction === 'desc' ? -1 : 1
+  return [...tasks].sort((left, right) => {
+    const leftValue = field === 'priority' ? priorityRank(left.priority) : String(left[field as keyof Task] ?? '')
+    const rightValue = field === 'priority' ? priorityRank(right.priority) : String(right[field as keyof Task] ?? '')
+    return leftValue < rightValue ? -1 * multiplier : leftValue > rightValue ? multiplier : 0
+  })
+}
+
+function priorityRank(priority: Task['priority']) {
+  return { LOW: 1, MEDIUM: 2, HIGH: 3, URGENT: 4 }[priority]
+}
+
+function updatedPage(
+  page: PageResponse<Task>,
+  filters: TaskFilters,
+  task: Task,
+  previousTask?: Task,
+) {
+  const cachedTask = page.content.find((item) => item.id === task.id)
+  const previous = previousTask ?? cachedTask
+  const matchedBefore = previous ? taskMatchesFilters(previous, filters) : false
+  const matchesNow = taskMatchesFilters(task, filters)
+  const totalElements = Math.max(0, page.page.totalElements + Number(matchesNow) - Number(matchedBefore))
+  let content = page.content.filter((item) => item.id !== task.id)
+
+  const belongedToThisPage = Boolean(cachedTask)
+  if (matchesNow && (belongedToThisPage || filters.page === 0)) {
+    content = sortTasks([...content, task], filters.sort).slice(0, filters.size)
+  }
+
+  return {
+    content,
+    page: {
+      ...page.page,
+      totalElements,
+      totalPages: totalElements === 0 ? 0 : Math.ceil(totalElements / page.page.size),
+    },
+  }
+}
+
+export function upsertTaskAcrossListCaches(
+  queryClient: QueryClient,
+  task: Task,
+  previousTask?: Task,
+) {
+  for (const [key, page] of queryClient.getQueriesData<PageResponse<Task>>({ queryKey: taskKeys.lists() })) {
+    const filters = filtersFromKey(key)
+    if (!page || !filters) continue
+    queryClient.setQueryData(key, updatedPage(page, filters, task, previousTask))
+  }
+}
+
+export function removeTaskAcrossListCaches(queryClient: QueryClient, task: Task) {
+  for (const [key, page] of queryClient.getQueriesData<PageResponse<Task>>({ queryKey: taskKeys.lists() })) {
+    const filters = filtersFromKey(key)
+    if (!page || !filters || !taskMatchesFilters(task, filters)) continue
+    const totalElements = Math.max(0, page.page.totalElements - 1)
+    queryClient.setQueryData<PageResponse<Task>>(key, {
+      content: page.content.filter((item) => item.id !== task.id),
+      page: {
+        ...page.page,
+        totalElements,
+        totalPages: totalElements === 0 ? 0 : Math.ceil(totalElements / page.page.size),
+      },
+    })
+  }
+}
+
+function findTaskInCache(queryClient: QueryClient, taskId: string) {
+  const detail = queryClient.getQueryData<Task>(taskKeys.detail(taskId))
+  if (detail) return detail
+  for (const [, page] of queryClient.getQueriesData<PageResponse<Task>>({ queryKey: taskKeys.lists() })) {
+    const task = page?.content.find((item) => item.id === taskId)
+    if (task) return task
+  }
+  return undefined
 }
 
 function dayBounds(offsetDays = 0) {
