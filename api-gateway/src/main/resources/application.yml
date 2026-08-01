@@ -31,7 +31,7 @@ spring:
             - id: file-service
               uri: ${FILE_SERVICE_URI:http://localhost:8082}
               predicates:
-                - Path=/api/v1/files/**
+                - Path=/api/v1/files/**,/api/v1/folders/**
 
 server:
   port: ${SERVER_PORT:8080}

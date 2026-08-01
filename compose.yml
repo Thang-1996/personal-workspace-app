@@ -31,6 +31,57 @@ services:
       retries: 10
       start_period: 5s
 
+  file-postgres:
+    image: postgres:17-alpine
+    container_name: file-postgres
+    environment:
+      POSTGRES_DB: file_db
+      POSTGRES_USER: file_service
+      POSTGRES_PASSWORD: file_service_local
+    ports:
+      - "5434:5432"
+    volumes:
+      - file-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U file_service -d file_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:RELEASE.2025-07-23T15-54-02Z
+    container_name: personal-workspace-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  file-service:
+    build:
+      context: .
+      dockerfile: file-service/Dockerfile
+    container_name: file-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://file-postgres:5432/file_db
+      DB_USERNAME: file_service
+      DB_PASSWORD: file_service_local
+      MINIO_ENDPOINT: http://minio:9000
+    ports:
+      - "8082:8082"
+    depends_on:
+      file-postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      keycloak:
+        condition: service_started
+
   task-service:
     build:
       context: .
@@ -65,6 +116,10 @@ services:
         condition: service_started
       keycloak:
         condition: service_started
+      file-service:
+        condition: service_started
 
 volumes:
   task-postgres-data:
+  file-postgres-data:
+  minio-data:
