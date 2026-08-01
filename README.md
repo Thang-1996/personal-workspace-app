@@ -51,3 +51,18 @@ Xem tài liệu triển khai và kiến thức của PER-25 tại
 [`docs/PER-25-implementation.md`](docs/PER-25-implementation.md).
 Tài liệu thiết kế domain, database và kiến thức của PER-7:
 [`docs/PER-7-implementation.md`](docs/PER-7-implementation.md).
+
+## Frontend
+
+React/Vite UI nằm tại `frontend-app`:
+
+```bash
+cd frontend-app
+npm install
+npm run dev
+```
+
+Vite chạy tại <http://localhost:5173> và proxy `/api` sang Task Service ở port
+`8081`. Chạy `npm run check` để lint, test và production build. Xem kiến trúc,
+UI reference, screen list và giải đáp kỹ thuật tại
+[`docs/PER-8-implementation.md`](docs/PER-8-implementation.md).
