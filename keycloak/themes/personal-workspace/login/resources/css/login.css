@@ -23,7 +23,7 @@ body {
 .pf-v5-c-login__container {
   display: block;
   margin: auto;
-  max-width: 30rem;
+  max-width: 38rem;
   width: 100%;
 }
 
@@ -85,7 +85,7 @@ body {
 }
 
 .pf-v5-c-login__main-body {
-  padding: 0 2.5rem 2rem;
+  padding: 0 3rem 2rem;
 }
 
 #kc-form-login {
@@ -103,23 +103,23 @@ body {
   width: 100%;
 }
 
-#kc-form-options {
-  align-items: flex-start;
-  display: flex;
+.pf-v5-c-helper-text.pf-v5-u-justify-content-space-between {
+  align-items: center;
+  display: grid !important;
   gap: 1rem;
-  justify-content: space-between;
+  grid-template-columns: max-content max-content;
+  justify-content: space-between !important;
+  width: 100%;
 }
 
-#kc-form-options > * {
+.pf-v5-c-helper-text .pf-v5-c-check,
+.pf-v5-c-helper-text .pf-v5-c-check__label,
+.pf-v5-c-helper-text .pf-v5-c-helper-text__item {
   min-width: 0;
-}
-
-#kc-form-options label,
-#kc-form-options .pf-v5-c-check__label {
   white-space: nowrap;
 }
 
-#kc-form-options a {
+.pf-v5-c-helper-text a {
   white-space: nowrap;
   text-align: right;
 }
@@ -129,8 +129,16 @@ body {
 }
 
 #kc-info-wrapper {
+  display: block;
   padding: 1rem 2.5rem;
   text-align: center;
+  width: 100%;
+}
+
+#kc-registration,
+#kc-registration > span {
+  display: block;
+  width: 100%;
 }
 
 .pf-v5-c-form-control,
@@ -205,13 +213,14 @@ a {
     white-space: normal;
   }
 
-  #kc-form-options {
+  .pf-v5-c-helper-text.pf-v5-u-justify-content-space-between {
     align-items: flex-start;
+    display: flex !important;
     flex-direction: column;
     gap: 0.5rem;
   }
 
-  #kc-form-options a {
+  .pf-v5-c-helper-text a {
     text-align: left;
   }
 }

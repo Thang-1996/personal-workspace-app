@@ -50,6 +50,9 @@ vào container. Theme kế thừa `keycloak.v2`, chỉ override CSS:
 - Khoảng cách dọc của PatternFly được override ở form group/header/info area để
   card luôn nằm gọn trong viewport; title và các action quan trọng không wrap ở
   desktop, nhưng vẫn cho phép xếp dọc trên màn hình rất hẹp.
+- Card desktop dùng bề rộng tối đa 38rem với padding đối xứng. Helper row của
+  password dùng hai cột `max-content` phân bố đều, còn registration footer trải
+  đủ chiều rộng nên browser zoom/font scaling không làm nội dung bị bó hoặc lệch.
 - Input focus state, primary button và info/register area.
 - Responsive mobile và `prefers-reduced-motion`.
 
